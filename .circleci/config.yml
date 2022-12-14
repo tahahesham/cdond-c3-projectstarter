@@ -3,6 +3,36 @@ orbs:
   slack: circleci/slack@4.1
 
 commands:
+  install_awscli:
+    description: Install AWS CLI V2
+    steps:
+      - run:
+          name: Install AWS CLI V2
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+  
+  install_ansible:
+    description: Install Ansible
+    steps:
+      - run:
+          name: Install Ansible
+          command: |
+            python3 -m pip install --user ansible
+            
+  install_nodejs:
+    description: Install Node.js 13.8.0
+    steps:
+      - run:
+          name: Install Node.js 13.8.0
+          command: |
+            curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+            sudo apt install -y nodejs
+            sudo apt install -y npm
+            # Use n version manager to use Node.js v13.8.0
+            sudo npm install --global n
+            sudo n 13.8.0
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
@@ -138,9 +168,10 @@ jobs:
 
   deploy-infrastructure:
     docker:
-      - image: amazon/aws-cli
+      - image: cimg/python:3.10
     steps:
       - checkout
+      - install_awscli
       - run: yum install -y tar gzip
       - run:
           name: Ensure back-end infrastructure exists
@@ -174,21 +205,25 @@ jobs:
 
   configure-infrastructure:
     docker:
-      - image: python:3.7-alpine3.16
+      - image: cimg/python:3.10
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints: ["69:56:6f:74:4d:f5:28:5f:8c:33:42:1a:76:b7:5e:5c" ]
+          fingerprints:
+            - '69:56:6f:74:4d:f5:28:5f:8c:33:42:1a:76:b7:5e:5c'
       - run:
           name: Install dependencies
           command: |
             apk add --update --no-cache tar gzip ansible aws-cli
       - attach_workspace:
           at: ~/
+      - install_awscli
+      - install_ansible
       - run:
           name: Configure server
           command: |
             cd .circleci/ansible
+            cat inventory.txt
             ansible-playbook -i inventory.txt configure-server.yml
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7} 
