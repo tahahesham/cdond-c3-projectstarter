@@ -204,24 +204,40 @@ jobs:
 
   configure-infrastructure:
     docker:
-      - image: cimg/python:3.10
+      - image: cimg/aws:2022.06
+    # Docker image here that supports Ansible
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints:
-            - '69:56:6f:74:4d:f5:28:5f:8c:33:42:1a:76:b7:5e:5c'
+          fingerprints: [ '69:56:6f:74:4d:f5:28:5f:8c:33:42:1a:76:b7:5e:5c' ]
+      - run:
+          name: Install dependencies
+          command: |
+            sudo apt update 
+            sudo apt upgrade
+            sudo apt install ansible && sudo apt install tar 
+            sudo apt install gzip
       - attach_workspace:
           at: ~/
-      - install_awscli
-      - install_ansible
       - run:
-          name: Configure server
+          name: Configure Server
+          no_output_timeout: 30m
           command: |
+            echo NODE_ENV=production >> "backend/.env"
+            echo VERSION=1 >> "backend/.env"
+            echo TYPEORM_CONNECTION=postgres >> "backend/.env"
+            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> "backend/.env"
+            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> "backend/.env"
+            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
             cd .circleci/ansible
             cat inventory.txt
             ansible-playbook -i inventory.txt configure-server.yml
-      - destroy-environment:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7} 
+      - destroy-environment
 
   run-migrations:
     docker:
