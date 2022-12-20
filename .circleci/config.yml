@@ -244,35 +244,36 @@ jobs:
 
   run-migrations:
     docker:
-      - image: circleci/node:13.8.0 # safest to use to avoid migration errors
+      # Docker image here that supports NodeJS
+      - image: circleci/node:13.8.0  
     steps:
+      # Checkout code from git
       - checkout
-      - run:
-          name: Install dependencies
-          command: |
-            sudo apt install -y tar gzip curl
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip -qq awscliv2.zip
-            sudo ./aws/install
+      # restore backend cashe
       - restore_cache:
           keys: [backend-build]
-      - attach_workspace:
-          at: ~/
+      - install_awscli
       - run:
           name: Run migrations
           command: |
             cd backend
-            npm run migrations >> migrations.txt
+            npm install
+            # Run and save the migration output
+            npm run migration > migrations_dump.txt
+            cat migrations_dump.txt
       - run:
-          name: Send migration results to kvdb
+          name: Send migration results to KVDB 
           command: |
-            if grep -q "success" ~/project/backend/migrations.txt
+            sudo apt update
+            sudo apt install curl
+            if grep -q "No migrations are pending" ~/project/backend/migrations_dump.txt
             then
-              curl --insecure https://kvdb.io/${KVDB_BUCKET}/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1'
+              curl https://kvdb.io/${KVDB_BUCKET}/migration_${CIRCLE_WORKFLOW_ID:0:7} -k -d '1'
             fi
-      - destroy-environment:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      # Here's where you will add some code to rollback on failure
+      - destroy-environment
       - revert-migrations
+
 
   deploy-frontend:
     docker:
