@@ -157,8 +157,13 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache: 
-          keys: [backend-build]
-      # Your job code here
+          keys: 
+            - backend-deps-{{ checksum "backend/package-lock.json"}}
+      - run:
+          name: Install dependencies
+          command: |
+            cd backend
+            npm install
       - run: 
           name: Scan Back-end
           command: |
@@ -166,7 +171,7 @@ jobs:
             npm install
             npm audit fix --force --audit-level=critical
             npm audit fix --force --audit-level=critical
-            npm audit --audit-level=critical
+            #npm audit --audit-level=critical
 
       - slack/notify:
           event: fail
