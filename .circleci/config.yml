@@ -266,7 +266,7 @@ jobs:
           command: |
             sudo apt update
             sudo apt install curl
-            if grep -q "No migrations are pending" ~/project/backend/migrations_dump.txt
+            if grep -q "has been executed successfully" ~/project/backend/migrations_dump.txt
             then
               curl https://kvdb.io/${KVDB_BUCKET}/migration_${CIRCLE_WORKFLOW_ID:0:7} -k -d '1'
             fi
@@ -461,7 +461,7 @@ workflows:
           requires: [build-frontend, build-backend]
           # filters:
           #   branches:
-          #     only: [main]
+          #     only: [master]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
       - run-migrations:
