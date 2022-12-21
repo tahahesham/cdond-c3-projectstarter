@@ -264,7 +264,7 @@ jobs:
       - run:
           name: Send migration results to KVDB 
           command: |
-            sudo apt updat
+            sudo apt update
             sudo apt install curl
             if grep -q "No migrations are pending" ~/project/backend/migrations_dump.txt
             then
