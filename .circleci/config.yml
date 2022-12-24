@@ -484,7 +484,7 @@ jobs:
 
   notify-on-success:
     docker:
-      - image: cimg/base
+      - image: cimg/python:3.10
     steps:
       - slack/notify:
           event: pass
