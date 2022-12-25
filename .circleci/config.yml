@@ -403,7 +403,7 @@ jobs:
                 # Change this to 0 after the job fails.
               exit 1
             else
-              exit 1
+              exit 2
             fi
       # Here's where you will add some code to rollback on failure  
       - destroy-environment
