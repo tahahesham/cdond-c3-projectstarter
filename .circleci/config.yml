@@ -3,14 +3,6 @@ orbs:
   slack: circleci/slack@4.1
 
 commands:
-  notify_on_failure:
-    steps:
-      - slack/notify:
-          event: fail
-          channel: cicd-pipeline
-          template: basic_fail_1
-
-
   install_awscli:
     description: Install AWS CLI V2
     steps:
@@ -96,8 +88,6 @@ jobs:
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
-
-      - notify_on_failure
 
   build-backend:
     docker:
@@ -482,15 +472,6 @@ jobs:
                 echo "----------Cleaning Up Failed----------"
               fi
 
-  notify-on-success:
-    docker:
-      - image: cimg/python:3.10
-    steps:
-      - slack/notify:
-          event: pass
-          channel: cicd-pipeline
-          template: success_tagged_deployment
-
 workflows:
   default:
     jobs:
@@ -504,8 +485,6 @@ workflows:
           requires: [build-backend]
       - scan-frontend:
           requires: [build-frontend]
-      - notify-on-success:
-          requires: [build-frontend, build-backend]
       - deploy-infrastructure:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
           filters:
